@@ -5,9 +5,9 @@ variable "enable_kms_ebs" {
   default     = false
 }
 
-# KMS User Account ARN
-variable "kms_ebs_user_account_arn" {
-  description = "KMS User Account ARN"
+# KMS User Account ARNs
+variable "kms_ebs_user_account_arns" {
+  description = "KMS User Account ARNs"
   type        = list(string)
   default     = []
 }
