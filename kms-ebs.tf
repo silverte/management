@@ -19,7 +19,7 @@ module "kms-ebs" {
   key_administrators = [
     data.aws_caller_identity.current.arn
   ]
-  key_users = var.kms_ebs_user_account_arn
+  key_users = var.kms_ebs_user_account_arns
 
   # Aliases
   aliases = ["ebs"]
