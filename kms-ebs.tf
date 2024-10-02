@@ -19,7 +19,14 @@ module "kms-ebs" {
   key_administrators = [
     data.aws_caller_identity.current.arn
   ]
-  key_users = var.kms_ebs_use_account_arns
+  key_users = [
+    "arn:aws:iam::${var.accounts["network"]}:root",
+    "arn:aws:iam::${var.accounts["shared"]}:root",
+    "arn:aws:iam::${var.accounts["sandbox"]}:root",
+    "arn:aws:iam::${var.accounts["dev"]}:root",
+    "arn:aws:iam::${var.accounts["stg"]}:root",
+    "arn:aws:iam::${var.accounts["prd"]}:root"
+  ]
 
   # Aliases
   aliases = ["ebs"]

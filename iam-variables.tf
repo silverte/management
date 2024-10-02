@@ -13,7 +13,7 @@ variable "create_account_password_policy" {
 }
 
 # IAM Users
-variable "admin_iam_users" {
+variable "iam_user_admins" {
   description = "IAM Users"
   type        = list(string)
   default     = []
