@@ -6,7 +6,7 @@ variable "enable_kms_rds" {
 }
 
 # KMS User Account ARNs
-variable "kms_rds_user_account_arns" {
+variable "kms_rds_use_account_arns" {
   description = "KMS User Account ARNs"
   type        = list(string)
   default     = []
