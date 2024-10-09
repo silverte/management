@@ -18,3 +18,10 @@ variable "iam_user_admins" {
   type        = list(string)
   default     = []
 }
+
+# Account Alias
+variable "account_alias" {
+  description = "Account Alias"
+  type        = string
+  default     = ""
+}

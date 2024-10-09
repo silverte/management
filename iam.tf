@@ -6,15 +6,15 @@ module "iam_account" {
   source                         = "terraform-aws-modules/iam/aws//modules/iam-account"
   create_account_password_policy = var.create_account_password_policy
 
-  account_alias = "${var.service}-${var.environment}"
+  account_alias = var.account_alias
 
-  max_password_age             = 365
+  max_password_age             = 90
   minimum_password_length      = 8
   password_reuse_prevention    = 3
-  require_lowercase_characters = false
-  require_uppercase_characters = false
-  require_symbols              = false
-  require_numbers              = false
+  require_lowercase_characters = true
+  require_uppercase_characters = true
+  require_symbols              = true
+  require_numbers              = true
 }
 
 module "iam_user" {
