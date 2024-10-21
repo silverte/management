@@ -4,9 +4,9 @@ terraform {
 
   # Configure the S3 backend
   backend "s3" {
-    bucket = "s3-esp-terraform-state"
-    key    = "management/terraform.tfstate"
-    region = "us-west-2"
+    bucket = "s3-esp-mgmt-terraform-state"
+    key    = "terraform.tfstate"
+    region = "ap-northeast-2"
   }
 
   required_providers {
