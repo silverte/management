@@ -49,7 +49,8 @@ module "iam_group_administrator" {
     "arn:aws:iam::aws:policy/AdministratorAccess",
     module.iam_policy_restrict_ip.arn,
     module.iam_policy_restrict_region.arn,
-    module.iam_policy_assumable_roles_admin.arn
+    module.iam_policy_assumable_roles_admin.arn,
+    module.iam_policy_force_mfa.arn
   ]
 }
 
@@ -64,7 +65,8 @@ module "iam_group_poweruser" {
     "arn:aws:iam::aws:policy/PowerUserAccess",
     module.iam_policy_restrict_ip.arn,
     module.iam_policy_restrict_region.arn,
-    module.iam_policy_assumable_roles_poweruser.arn
+    module.iam_policy_assumable_roles_poweruser.arn,
+    module.iam_policy_force_mfa.arn
   ]
 }
 
@@ -79,7 +81,8 @@ module "iam_group_databaseadmin" {
     "arn:aws:iam::aws:policy/job-function/DatabaseAdministrator",
     module.iam_policy_restrict_ip.arn,
     module.iam_policy_restrict_region.arn,
-    module.iam_policy_assumable_roles_databaseadmin.arn
+    module.iam_policy_assumable_roles_databaseadmin.arn,
+    module.iam_policy_force_mfa.arn
   ]
 }
 
@@ -94,7 +97,8 @@ module "iam_group_systemadmin" {
     "arn:aws:iam::aws:policy/job-function/SystemAdministrator",
     module.iam_policy_restrict_ip.arn,
     module.iam_policy_restrict_region.arn,
-    module.iam_policy_assumable_roles_systemadmin.arn
+    module.iam_policy_assumable_roles_systemadmin.arn,
+    module.iam_policy_force_mfa.arn
   ]
 }
 
@@ -109,7 +113,8 @@ module "iam_group_networkadmin" {
     "arn:aws:iam::aws:policy/job-function/NetworkAdministrator",
     module.iam_policy_restrict_ip.arn,
     module.iam_policy_restrict_region.arn,
-    module.iam_policy_assumable_roles_networkadmin.arn
+    module.iam_policy_assumable_roles_networkadmin.arn,
+    module.iam_policy_force_mfa.arn
   ]
 }
 
@@ -124,7 +129,8 @@ module "iam_group_viewonly" {
     "arn:aws:iam::aws:policy/job-function/ViewOnlyAccess",
     module.iam_policy_restrict_ip.arn,
     module.iam_policy_restrict_region.arn,
-    module.iam_policy_assumable_roles_viewonly.arn
+    module.iam_policy_assumable_roles_viewonly.arn,
+    module.iam_policy_force_mfa.arn
   ]
 }
 
@@ -230,6 +236,53 @@ EOF
     local.tags,
     {
       Name = "policy-${var.service}-${var.environment}-restrict-region"
+    },
+  )
+}
+
+#####################################################################################
+# IAM policy to force MFA
+#####################################################################################
+module "iam_policy_force_mfa" {
+  source        = "terraform-aws-modules/iam/aws//modules/iam-policy"
+  create_policy = var.create_iam
+
+  name        = "policy-${var.service}-${var.environment}-force-mfa"
+  path        = "/"
+  description = "IAM policy to force MFA"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyAllExceptListedIfNoMFA",
+      "Effect": "Deny",
+      "NotAction": [
+        "iam:CreateVirtualMFADevice",
+        "iam:EnableMFADevice",
+        "iam:GetUser",
+        "iam:ListMFADevices",
+        "iam:ListVirtualMFADevices",
+        "iam:DeleteVirtualMFADevice",
+        "iam:ResyncMFADevice",
+        "sts:GetSessionToken"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "BoolIfExists": {
+          "aws:MultiFactorAuthPresent": "false"
+        }
+      }
+    }
+  ]
+}
+EOF
+
+  tags = merge(
+    local.tags,
+    {
+      Name = "policy-${var.service}-${var.environment}-force-mfa"
     },
   )
 }
