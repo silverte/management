@@ -22,23 +22,23 @@ module "s3_bucket_cloudtrail_log" {
 }
 
 resource "aws_s3_bucket_policy" "cloudtrail_log" {
-  count = var.create_s3_cloudtrail_log ? 1: 0
+  count  = var.create_s3_cloudtrail_log ? 1 : 0
   bucket = module.s3_bucket_cloudtrail_log.s3_bucket_id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowCrossAccountAccess"
-        Effect    = "Allow"
+        Sid    = "AllowCrossAccountAccess"
+        Effect = "Allow"
         Principal = {
-          AWS = [ 
+          AWS = [
             "arn:aws:iam::${var.accounts["network"]}:root",
             "arn:aws:iam::${var.accounts["shared"]}:root",
             "arn:aws:iam::${var.accounts["sandbox"]}:root",
             "arn:aws:iam::${var.accounts["dev"]}:root",
             "arn:aws:iam::${var.accounts["stg"]}:root",
             "arn:aws:iam::${var.accounts["prd"]}:root"
-           ]
+          ]
         }
         Action = [
           "s3:GetObject",
@@ -73,23 +73,23 @@ module "s3_bucket_config_log" {
 }
 
 resource "aws_s3_bucket_policy" "config_log" {
-  count = var.create_s3_config_log ? 1: 0
+  count  = var.create_s3_config_log ? 1 : 0
   bucket = module.s3_bucket_config_log.s3_bucket_id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowCrossAccountAccess"
-        Effect    = "Allow"
+        Sid    = "AllowCrossAccountAccess"
+        Effect = "Allow"
         Principal = {
-          AWS = [ 
+          AWS = [
             "arn:aws:iam::${var.accounts["network"]}:root",
             "arn:aws:iam::${var.accounts["shared"]}:root",
             "arn:aws:iam::${var.accounts["sandbox"]}:root",
             "arn:aws:iam::${var.accounts["dev"]}:root",
             "arn:aws:iam::${var.accounts["stg"]}:root",
             "arn:aws:iam::${var.accounts["prd"]}:root"
-           ]
+          ]
         }
         Action = [
           "s3:GetObject",
@@ -123,37 +123,79 @@ module "s3_bucket_vpc_flow_log" {
   )
 }
 
+# resource "aws_s3_bucket_policy" "vpc_flow_log" {
+#   count  = var.create_s3_vpc_flow_log ? 1 : 0
+#   bucket = module.s3_bucket_vpc_flow_log.s3_bucket_id
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Sid    = "AllowCrossAccountAccess"
+#         Effect = "Allow"
+#         Principal = {
+#           AWS = [
+#             "arn:aws:iam::${var.accounts["network"]}:root",
+#             "arn:aws:iam::${var.accounts["shared"]}:root",
+#             "arn:aws:iam::${var.accounts["sandbox"]}:root",
+#             "arn:aws:iam::${var.accounts["dev"]}:root",
+#             "arn:aws:iam::${var.accounts["stg"]}:root",
+#             "arn:aws:iam::${var.accounts["prd"]}:root"
+#           ]
+#         }
+#         Action = [
+#           "s3:GetObject",
+#           "s3:PutObject",
+#           "s3:ListBucket"
+#         ]
+#         Resource = [
+#           module.s3_bucket_vpc_flow_log.s3_bucket_arn,
+#           "${module.s3_bucket_vpc_flow_log.s3_bucket_arn}/*"
+#         ]
+#       }
+#     ]
+#   })
+# }
+
 resource "aws_s3_bucket_policy" "vpc_flow_log" {
-  count = var.create_s3_vpc_flow_log ? 1: 0
+  count  = var.create_s3_vpc_flow_log ? 1 : 0
   bucket = module.s3_bucket_vpc_flow_log.s3_bucket_id
   policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
+    "Version" : "2012-10-17",
+    "Statement" : [
       {
-        Sid       = "AllowCrossAccountAccess"
-        Effect    = "Allow"
-        Principal = {
-          AWS = [ 
-            "arn:aws:iam::${var.accounts["network"]}:root",
-            "arn:aws:iam::${var.accounts["shared"]}:root",
-            "arn:aws:iam::${var.accounts["sandbox"]}:root",
-            "arn:aws:iam::${var.accounts["dev"]}:root",
-            "arn:aws:iam::${var.accounts["stg"]}:root",
-            "arn:aws:iam::${var.accounts["prd"]}:root"
-           ]
+        "Sid" : "AllowVPCCrossAccountLogDelivery",
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "delivery.logs.amazonaws.com"
+        },
+        "Action" : "s3:PutObject",
+        "Resource" : ["arn:aws:s3:::s3-${var.service}-${var.environment}-vpc-flow-log", "arn:aws:s3:::s3-${var.service}-${var.environment}-vpc-flow-log/*"],
+        "Condition" : {
+          "StringEquals" : {
+            "aws:SourceAccount" : ["${var.accounts["network"]}"],
+            "s3:x-amz-acl" : "bucket-owner-full-control"
+          },
+          "ArnLike" : { "aws:SourceArn" : ["arn:aws:logs:*:${var.accounts["network"]}:*"] }
         }
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:ListBucket"
-        ]
-        Resource = [
-          module.s3_bucket_vpc_flow_log.s3_bucket_arn,
-          "${module.s3_bucket_vpc_flow_log.s3_bucket_arn}/*"
-        ]
+      },
+      {
+        "Sid" : "AllowBucketAclCheck",
+        "Effect" : "Allow",
+        "Principal" : {
+          "Service" : "delivery.logs.amazonaws.com"
+        },
+        "Action" : ["s3:GetBucketAcl", "s3:ListBucket"],
+        "Resource" : "arn:aws:s3:::s3-${var.service}-${var.environment}-vpc-flow-log",
+        "Condition" : {
+          "StringEquals" : {
+            "aws:SourceAccount" : ["${var.accounts["network"]}"]
+          },
+          "ArnLike" : { "aws:SourceArn" : ["arn:aws:logs:*:${var.accounts["network"]}:*"] }
+        }
       }
     ]
-  })
+    }
+  )
 }
 
 ################################################################################
@@ -175,23 +217,23 @@ module "s3_bucket_access_log" {
 }
 
 resource "aws_s3_bucket_policy" "s3_access_log" {
-  count = var.create_s3_access_log ? 1: 0
+  count  = var.create_s3_access_log ? 1 : 0
   bucket = module.s3_bucket_access_log.s3_bucket_id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowCrossAccountAccess"
-        Effect    = "Allow"
+        Sid    = "AllowCrossAccountAccess"
+        Effect = "Allow"
         Principal = {
-          AWS = [ 
+          AWS = [
             "arn:aws:iam::${var.accounts["network"]}:root",
             "arn:aws:iam::${var.accounts["shared"]}:root",
             "arn:aws:iam::${var.accounts["sandbox"]}:root",
             "arn:aws:iam::${var.accounts["dev"]}:root",
             "arn:aws:iam::${var.accounts["stg"]}:root",
             "arn:aws:iam::${var.accounts["prd"]}:root"
-           ]
+          ]
         }
         Action = [
           "s3:GetObject",
