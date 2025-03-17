@@ -15,10 +15,8 @@ module "kms-ebs" {
   multi_region = false
 
   # Policy
-  key_owners = [data.aws_caller_identity.current.arn]
-  key_administrators = [
-    data.aws_caller_identity.current.arn
-  ]
+  key_owners         = var.kms_key_owners
+  key_administrators = var.kms_key_administrators
   key_users = [
     "arn:aws:iam::${var.accounts["network"]}:root",
     "arn:aws:iam::${var.accounts["shared"]}:root",
@@ -51,10 +49,8 @@ module "kms-rds" {
   multi_region = false
 
   # Policy
-  key_owners = [data.aws_caller_identity.current.arn]
-  key_administrators = [
-    data.aws_caller_identity.current.arn
-  ]
+  key_owners         = var.kms_key_owners
+  key_administrators = var.kms_key_administrators
   key_users = [
     "arn:aws:iam::${var.accounts["network"]}:root",
     "arn:aws:iam::${var.accounts["shared"]}:root",
@@ -79,7 +75,7 @@ module "kms-enc" {
   source = "terraform-aws-modules/kms/aws"
   create = var.create_kms_enc
 
-  description         = "Data Encryption customer managed key"
+  description         = "Dev Data Encryption customer managed key"
   enable_key_rotation = true
   # rotation_period_in_days = 365
   is_enabled   = true
@@ -87,26 +83,77 @@ module "kms-enc" {
   multi_region = false
 
   # Policy
-  key_owners = [data.aws_caller_identity.current.arn]
-  key_administrators = [
-    data.aws_caller_identity.current.arn
-  ]
+  key_owners         = var.kms_key_owners
+  key_administrators = var.kms_key_administrators
   key_users = [
-    "arn:aws:iam::${var.accounts["network"]}:root",
-    "arn:aws:iam::${var.accounts["shared"]}:root",
-    "arn:aws:iam::${var.accounts["sandbox"]}:root",
-    "arn:aws:iam::${var.accounts["dev"]}:root",
-    "arn:aws:iam::${var.accounts["stg"]}:root",
-    "arn:aws:iam::${var.accounts["prd"]}:root"
+    "arn:aws:iam::${var.accounts["dev"]}:root"
   ]
 
   # Aliases
-  aliases = ["enc"]
+  aliases = ["enc", "enc-dev"]
 
   tags = merge(
     local.tags,
     {
-      "Name" = "kms-${var.service}-enc"
+      "Name" = "kms-${var.service}-${var.environment}-enc"
+    }
+  )
+}
+
+module "kms-enc-stg" {
+  source = "terraform-aws-modules/kms/aws"
+  create = var.create_kms_enc
+
+  description         = "Stg Data Encryption customer managed key"
+  enable_key_rotation = true
+  # rotation_period_in_days = 365
+  is_enabled   = true
+  key_usage    = "ENCRYPT_DECRYPT"
+  multi_region = false
+
+  # Policy
+  key_owners         = var.kms_key_owners
+  key_administrators = var.kms_key_administrators
+  key_users = [
+    "arn:aws:iam::${var.accounts["stg"]}:root"
+  ]
+
+  # Aliases
+  aliases = ["enc-stg"]
+
+  tags = merge(
+    local.tags,
+    {
+      "Name" = "kms-${var.service}-${var.environment}-enc"
+    }
+  )
+}
+
+module "kms-enc-prd" {
+  source = "terraform-aws-modules/kms/aws"
+  create = var.create_kms_enc
+
+  description         = "Stg Data Encryption customer managed key"
+  enable_key_rotation = true
+  # rotation_period_in_days = 365
+  is_enabled   = true
+  key_usage    = "ENCRYPT_DECRYPT"
+  multi_region = false
+
+  # Policy
+  key_owners         = var.kms_key_owners
+  key_administrators = var.kms_key_administrators
+  key_users = [
+    "arn:aws:iam::${var.accounts["prd"]}:root"
+  ]
+
+  # Aliases
+  aliases = ["enc-prd"]
+
+  tags = merge(
+    local.tags,
+    {
+      "Name" = "kms-${var.service}-${var.environment}-enc"
     }
   )
 }
@@ -123,10 +170,8 @@ module "kms-cloudtrail" {
   multi_region = false
 
   # Policy
-  key_owners = [data.aws_caller_identity.current.arn]
-  key_administrators = [
-    data.aws_caller_identity.current.arn
-  ]
+  key_owners         = var.kms_key_owners
+  key_administrators = var.kms_key_administrators
   key_users = [
     "arn:aws:iam::${var.accounts["network"]}:root",
     "arn:aws:iam::${var.accounts["shared"]}:root",
@@ -159,10 +204,8 @@ module "kms-guardduty" {
   multi_region = false
 
   # Policy
-  key_owners = [data.aws_caller_identity.current.arn]
-  key_administrators = [
-    data.aws_caller_identity.current.arn
-  ]
+  key_owners         = var.kms_key_owners
+  key_administrators = var.kms_key_administrators
   key_users = [
     "arn:aws:iam::${var.accounts["network"]}:root",
     "arn:aws:iam::${var.accounts["shared"]}:root",

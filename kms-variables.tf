@@ -1,3 +1,18 @@
+# kms key owners
+variable "kms_key_owners" {
+  description = "kms_key_owners"
+  type        = list(string)
+  default     = [""]
+}
+
+# kms key administrators
+variable "kms_key_administrators" {
+  description = "kms_key_administrators"
+  type        = list(string)
+  default     = [""]
+}
+
+
 # Whether to create an KMS EBS (True or False)
 variable "create_kms_ebs" {
   description = "Whether to create an KMS EBS"
