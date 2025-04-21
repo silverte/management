@@ -64,6 +64,10 @@ module "s3_bucket_config_log" {
   bucket        = "s3-${var.service}-${var.environment}-config-log"
   force_destroy = true
 
+  acl                      = "private"
+  control_object_ownership = true
+  object_ownership         = "ObjectWriter"
+
   tags = merge(
     local.tags,
     {
@@ -75,6 +79,7 @@ module "s3_bucket_config_log" {
 resource "aws_s3_bucket_policy" "config_log" {
   count  = var.create_s3_config_log ? 1 : 0
   bucket = module.s3_bucket_config_log.s3_bucket_id
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -92,14 +97,51 @@ resource "aws_s3_bucket_policy" "config_log" {
           ]
         }
         Action = [
+          "s3:ListBucket",
           "s3:GetObject",
-          "s3:PutObject",
-          "s3:ListBucket"
+          "s3:PutObject"
         ]
         Resource = [
           module.s3_bucket_config_log.s3_bucket_arn,
           "${module.s3_bucket_config_log.s3_bucket_arn}/*"
         ]
+      },
+      {
+        Sid       = "AWSConfigBucketPermissionsCheck"
+        Effect    = "Allow"
+        Principal = { Service = "config.amazonaws.com" }
+        Action = [
+          "s3:GetBucketAcl",
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
+        ]
+        Resource = module.s3_bucket_config_log.s3_bucket_arn
+      },
+      {
+        Sid       = "AWSConfigBucketDelivery"
+        Effect    = "Allow"
+        Principal = { Service = "config.amazonaws.com" }
+        Action    = "s3:PutObject"
+        Resource = [
+          "arn:aws:s3:::${module.s3_bucket_config_log.s3_bucket_id}/AWSLogs/${var.accounts["network"]}/*",
+          "arn:aws:s3:::${module.s3_bucket_config_log.s3_bucket_id}/AWSLogs/${var.accounts["shared"]}/*",
+          "arn:aws:s3:::${module.s3_bucket_config_log.s3_bucket_id}/AWSLogs/${var.accounts["sandbox"]}/*",
+          "arn:aws:s3:::${module.s3_bucket_config_log.s3_bucket_id}/AWSLogs/${var.accounts["dev"]}/*",
+          "arn:aws:s3:::${module.s3_bucket_config_log.s3_bucket_id}/AWSLogs/${var.accounts["stg"]}/*",
+          "arn:aws:s3:::${module.s3_bucket_config_log.s3_bucket_id}/AWSLogs/${var.accounts["prd"]}/*"
+        ]
+        Condition = {
+          StringEquals = {
+            "aws:SourceAccount" = [
+              var.accounts["network"],
+              var.accounts["shared"],
+              var.accounts["sandbox"],
+              var.accounts["dev"],
+              var.accounts["stg"],
+              var.accounts["prd"]
+            ]
+          }
+        }
       }
     ]
   })
